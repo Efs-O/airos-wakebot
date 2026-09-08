@@ -1,0 +1,8 @@
+#!/bin/sh
+# Sourced by /usr/etc/rc.d/rc.funcs at the end of boot (airOS 8).
+# Must not block: start the relay detached and return immediately.
+#
+# start-stop-daemon matches by executable path, so the daemon needs its own
+# uniquely named script -- pointing it at /usr/bin/lua would collide with any
+# other lua process and refuse to start.
+[ -x /etc/persistent/wakebotd.sh ] && start-stop-daemon -S -b -x /etc/persistent/wakebotd.sh

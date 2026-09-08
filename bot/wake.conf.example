@@ -1,0 +1,30 @@
+# Copy to /etc/persistent/wake.conf on the dish, chmod 600.
+# The real file holds a live bot token and is NEVER committed to this repo.
+#
+#   umask 077; vi /etc/persistent/wake.conf; chmod 600 /etc/persistent/wake.conf
+#
+# TOKEN   BotFather token for the DEDICATED wake bot. Must NOT be Forge's token:
+#         two getUpdates pollers on one token collide with HTTP 409.
+# CHATID  Only this chat may command the relay. The bot username is public, so
+#         anyone can message it; every other sender is logged and ignored.
+#         Find it: send /start to the bot, then read
+#         https://api.telegram.org/bot<TOKEN>/getUpdates
+TOKEN=123456789:REPLACE_ME
+CHATID=REPLACE_ME
+MAC=aa:bb:cc:dd:ee:ff
+BCAST=192.0.2.255
+PC_IP=192.0.2.10
+PC_NAME=REPLACE_ME
+# Optional authenticated Forge sleep receiver. Generate the secret with
+# “Forge: Generate WakeSleep Relay Secret”; it is mode-600 here and in VS Code
+# SecretStorage, never in a repository.
+#
+# Do NOT hand-edit these two on the dish -- use ../set-relay-secret.py, which
+# prompts hidden, streams over stdin so the value never reaches argv, and then
+# verifies the shape of what it wrote. RELAY_SECRET must be exactly 64 lowercase
+# hex characters; anything else means Forge answers 401 and nothing says why.
+# Check any dish with: python ../host/deploy.py --host <dish-ip>
+#
+# Addresses below are RFC 5737 documentation examples -- replace all of them.
+FORGE_RELAY_URL=http://192.0.2.10:8742/v1/sleep
+RELAY_SECRET=REPLACE_WITH_FORGE_GENERATED_SECRET

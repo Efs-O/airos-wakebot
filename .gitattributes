@@ -1,0 +1,5 @@
+# Everything here runs on a MIPS busybox device. A CRLF in a shell script makes
+# the shebang `#!/bin/sh\r`, which fails with an error naming a file that plainly
+# exists. deploy.py normalises on upload, but a clone-and-scp would not.
+* text=auto eol=lf
+*.pem -text

@@ -1,0 +1,7 @@
+# The live config: bot token, chat id, and the Forge pairing secret.
+# It has no place in this repository, ever. wake.conf.example is what ships.
+wake.conf
+
+__pycache__/
+*.pyc
+.venv/
