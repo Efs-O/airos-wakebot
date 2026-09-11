@@ -104,6 +104,36 @@ local function request_sleep()
   return nil, "Forge refused sleep (HTTP " .. (status:match("%d+") or "network error") .. ")."
 end
 
+-- Forward fixed lifecycle actions to the Windows Host Controller. The Telegram
+-- message contributes only the allow-listed program and action; it never
+-- supplies a path, PID, executable, or shell fragment.
+local function request_controller(program, action)
+  if not cfg.CONTROLLER_URL or not cfg.RELAY_SECRET then
+    return nil, "HalluScribe Host Controller is not configured on this relay."
+  end
+  local timestamp, request_nonce = tostring(os.time()), nonce()
+  local body = '{"program":"' .. program .. '"}'
+  local signature = sha256.hmac_hex(cfg.RELAY_SECRET, timestamp .. "." .. request_nonce .. "." .. body)
+  local path = "/v1/program/" .. program .. "/" .. action
+  local command = "curl -sS -m 20 -o " .. shellquote(TMP) .. " -w '%{http_code}'" ..
+    " -H " .. shellquote("X-Halluscribe-Timestamp: " .. timestamp) ..
+    " -H " .. shellquote("X-Halluscribe-Nonce: " .. request_nonce) ..
+    " -H " .. shellquote("X-Halluscribe-Signature: " .. signature) ..
+    " -H 'Content-Type: application/json' --data " .. shellquote(body) ..
+    " " .. shellquote(cfg.CONTROLLER_URL .. path) .. " 2>>" .. shellquote(LOG)
+  local pipe = io.popen(command, "r")
+  local status = pipe and pipe:read("*a") or ""
+  if pipe then pipe:close() end
+  local code = status:match("(%d%d%d)")
+  local f = io.open(TMP, "r")
+  local response = f and f:read("*a") or ""
+  if f then f:close() end
+  if code and code:sub(1, 1) == "2" then
+    return true, response
+  end
+  return nil, "Host Controller refused the request (HTTP " .. (code or "network error") .. ")."
+end
+
 -- mca-status is the same key=value dump the web UI's front page draws, and
 -- wstalist is the association list, so everything Ubiquiti's paid remote
 -- management would show for this link is already free on the box. Both are
@@ -212,6 +242,8 @@ local function register_commands()
     { command = "sleep", description = "Sleep " .. pc .. " (confirm required)" },
     { command = "status", description = "Check the relay and PC" },
     { command = "signal", description = "Link signal, rates and capacity" },
+    { command = "halluscribe", description = "Start or stop HalluScribe" },
+    { command = "vscode", description = "Start or stop VS Code" },
     { command = "help", description = "Show WakeForge commands" },
   })
   local result = api("setMyCommands", "commands=" .. urlenc(commands), 30)
@@ -223,6 +255,8 @@ local function help_text()
     "/wake — send a Wake-on-LAN magic packet if " .. pc .. " is asleep\n" ..
     "/sleep — sleep " .. pc .. "; requires /sleep confirm\n" ..
     "/status — show dish uptime and whether the PC answers\n" ..
+    "/halluscribe start|stop — control HalluScribe on the PC\n" ..
+    "/vscode start|stop — control VS Code on the PC\n" ..
     "/help — show this help\n\n" ..
     "Sleep is available only while Forge is running and the paired relay listener is enabled."
 end
@@ -268,6 +302,13 @@ local function handle(text, chat)
         cfg.PC_NAME, pc_up() and "UP" or "not answering", (up:match("^(%d+)") or "?")))
   elseif cmd == "signal" then
     say(chat, link_report())
+  elseif cmd == "halluscribe" or cmd == "vscode" then
+    if argument ~= "start" and argument ~= "stop" then
+      say(chat, "Use /" .. cmd .. " start or /" .. cmd .. " stop.")
+      return
+    end
+    local ok, detail = request_controller(cmd, argument)
+    say(chat, ok and (cmd .. " " .. argument .. " accepted.\n" .. detail) or detail)
   elseif cmd == "help" or cmd == "start" then
     say(chat, help_text())
   elseif cmd == "sleep" then

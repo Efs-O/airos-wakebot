@@ -111,6 +111,8 @@ the failure is silent.
 |---|---|
 | `/wake` | Sends a Wake-on-LAN magic packet |
 | `/sleep` | Asks the PC to suspend — needs a listener, see below. Requires `/sleep confirm` |
+| `/halluscribe start` / `stop` | Signed request to the fixed Windows Host Controller |
+| `/vscode start` / `stop` | Signed request to the fixed Windows Host Controller |
 | `/signal` | Link signal, noise, SNR, chains, TX/RX rates, capacity, distance, uptimes |
 | `/status` | Dish uptime, and whether the PC answers a ping |
 | `/help` | The above |
@@ -150,6 +152,7 @@ host/     deploy and configure it, from your workstation
 |---|---|
 | `deploy.py` | Check-first installer. **Run it after any firmware upgrade.** |
 | `set-relay-secret.py` | Installs the `/sleep` pairing secret |
+| `set-controller-url.py` | Installs the non-secret Windows controller URL |
 
 ---
 
@@ -168,6 +171,8 @@ export DISH_HOST=<dish management ip>
 python host/deploy.py                 # CHECK ONLY — the default, changes nothing
 python host/deploy.py --apply         # upload whatever differs, then verify
 python host/deploy.py --restore-conf  # create wake.conf (prompts, hidden)
+# after the controller is installed on the PC
+python host/set-controller-url.py --host <dish-management-ip> --url http://<pc-lan-ip>:8787
 ```
 
 Check mode is the default deliberately: this pushes code to a device whose
@@ -179,6 +184,11 @@ so `--apply` is idempotent.
 the Lua syntax check fails, and it **never uploads `wake.conf`** — that file
 holds the token and the pairing secret and deliberately has no copy in this
 repository.
+
+The lifecycle commands use the same `RELAY_SECRET` as the signed controller
+requests, but the controller URL is configured separately because it is not a
+secret. The dish sends only fixed program names and actions; it never sends a
+path, PID, or shell command.
 
 ### A firmware upgrade wipes everything
 

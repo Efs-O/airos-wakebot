@@ -28,3 +28,6 @@ PC_NAME=REPLACE_ME
 # Addresses below are RFC 5737 documentation examples -- replace all of them.
 FORGE_RELAY_URL=http://192.0.2.10:8742/v1/sleep
 RELAY_SECRET=REPLACE_WITH_FORGE_GENERATED_SECRET
+# The same signed relay can call the standalone Windows Host Controller.
+# Keep the URL local to the PC/LAN; never expose it directly to the internet.
+CONTROLLER_URL=http://192.0.2.10:8787
