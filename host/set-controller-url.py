@@ -14,10 +14,15 @@ CONF = "/etc/persistent/wake.conf"
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--host", default=os.environ.get("DISH_HOST"), required=False)
-    parser.add_argument("--url", default="http://192.168.1.70:8787")
+    parser.add_argument("--url", default=os.environ.get("CONTROLLER_URL"))
     args = parser.parse_args()
     if not args.host:
         raise SystemExit("Pass --host or set DISH_HOST.")
+    # No default: the controller's address is per-site, and a wrong one fails as
+    # a connection refused inside the dish rather than anywhere visible.
+    if not args.url:
+        raise SystemExit("Pass --url or set CONTROLLER_URL, "
+                         "e.g. http://<pc-lan-ip>:8787")
     if not args.url.startswith("http://") or any(char in args.url for char in " \t\r\n'\"`"):
         raise SystemExit("Refusing: --url must be a plain http:// LAN URL without shell characters.")
 
