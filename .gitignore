@@ -5,3 +5,7 @@ wake.conf
 __pycache__/
 *.pyc
 .venv/
+
+# Forge agent state — transient, per-machine, never part of the project.
+.coordination/
+FORGE.md
